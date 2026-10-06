@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import engine, Base, SessionLocal
-from app.routes import auth, customers, products, transactions, inventory, analytics, ai, market
+from app.routes import auth, customers, products, transactions, inventory, analytics, ai, market, govt
 from app.seed import seed_database
 from app.models.models import User
 
@@ -10,7 +10,7 @@ Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="AI-Powered Retail CRM API",
-    description="CRM platform with Scikit-learn Need & Demand Forecasting for Retail Shop Owners",
+    description="CRM platform with Scikit-learn Need & Demand Forecasting for Retail Shop Owners and Government Analysts",
     version="1.0.0"
 )
 
@@ -32,10 +32,10 @@ app.include_router(inventory.router)
 app.include_router(analytics.router)
 app.include_router(ai.router)
 app.include_router(market.router)
+app.include_router(govt.router)
 
 @app.on_event("startup")
 def startup_event():
-    # Auto-seed database if empty
     db = SessionLocal()
     try:
         user_count = db.query(User).count()

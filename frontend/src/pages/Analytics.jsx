@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { BarChart3, IndianRupee, TrendingUp, ShoppingBag } from 'lucide-react';
+import { BarChart3, IndianRupee, TrendingUp, ShoppingBag, Download } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import Navbar from '../components/Navbar';
 import MetricCard from '../components/MetricCard';
@@ -75,11 +75,46 @@ const Analytics = () => {
     }
   };
 
+  const handleExportCSV = () => {
+    const headers = ["Product Name", "Units Sold", "Revenue (INR)"];
+    const rows = topProducts.map(p => [
+      `"${p.product_name}"`,
+      p.units_sold,
+      p.revenue
+    ]);
+
+    const csvContent = "data:text/csv;charset=utf-8," 
+      + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `sales_analytics_report_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="flex-1 min-h-screen bg-slate-50">
       <Navbar title="Sales Analytics & Revenue Performance" />
 
       <main className="p-6 max-w-7xl mx-auto space-y-6">
+
+        {/* Action Bar */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-xl font-bold text-slate-900">Revenue & Product Performance Report</h1>
+            <p className="text-xs text-slate-500">Aggregated shop sales and product velocity metrics</p>
+          </div>
+          <button
+            onClick={handleExportCSV}
+            className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-md shadow-blue-500/20 transition-all flex items-center gap-2"
+          >
+            <Download className="w-4 h-4" />
+            <span>Export CSV Report</span>
+          </button>
+        </div>
 
         {/* Top KPIs */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
@@ -144,7 +179,15 @@ const Analytics = () => {
 
         {/* Product Revenue Ranking */}
         <div className="bg-white rounded-2xl p-6 border border-slate-200/80 card-shadow">
-          <h3 className="text-base font-bold text-slate-900 mb-4">Product Revenue Contribution</h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-base font-bold text-slate-900">Product Revenue Contribution</h3>
+            <button
+              onClick={handleExportCSV}
+              className="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1"
+            >
+              <Download className="w-3.5 h-3.5" /> Download Data
+            </button>
+          </div>
           
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">

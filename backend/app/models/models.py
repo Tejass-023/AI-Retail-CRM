@@ -66,16 +66,16 @@ class Product(Base):
     name = Column(String, nullable=False, index=True)
     category_id = Column(Integer, ForeignKey("categories.id"), nullable=False)
     shop_id = Column(Integer, ForeignKey("shops.id"), nullable=False)
-    price = Column(Float, nullable=False) # In INR ₹
+    price = Column(Float, nullable=False)
     stock_quantity = Column(Integer, default=0)
     min_stock_level = Column(Integer, default=10)
     supplier = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
-    shop = relationship("Shop", back_populates="products")
     category = relationship("Category", back_populates="products")
-    transaction_items = relationship("TransactionItem", back_populates="product")
+    shop = relationship("Shop", back_populates="products")
     inventory = relationship("Inventory", back_populates="product", uselist=False)
+    transaction_items = relationship("TransactionItem", back_populates="product")
     forecasts = relationship("DemandForecast", back_populates="product")
     recommendations = relationship("Recommendation", back_populates="product")
 
@@ -83,15 +83,15 @@ class Customer(Base):
     __tablename__ = "customers"
 
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, nullable=False, index=True)
+    name = Column(String, nullable=False)
     phone = Column(String, nullable=True)
     email = Column(String, nullable=True)
     address = Column(String, nullable=True)
     shop_id = Column(Integer, ForeignKey("shops.id"), nullable=False)
+    segment = Column(String, default=CustomerSegment.REGULAR.value)
     total_spent = Column(Float, default=0.0)
     purchase_count = Column(Integer, default=0)
     last_purchase_date = Column(DateTime, nullable=True)
-    segment = Column(String, default=CustomerSegment.OCCASIONAL.value)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     shop = relationship("Shop", back_populates="customers")
@@ -105,12 +105,12 @@ class Transaction(Base):
     customer_id = Column(Integer, ForeignKey("customers.id"), nullable=False)
     shop_id = Column(Integer, ForeignKey("shops.id"), nullable=False)
     total_amount = Column(Float, nullable=False)
-    payment_method = Column(String, default="CASH") # CASH, UPI, CARD
-    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    payment_method = Column(String, default="CASH")
+    created_at = Column(DateTime, default=datetime.utcnow)
 
     customer = relationship("Customer", back_populates="transactions")
     shop = relationship("Shop", back_populates="transactions")
-    items = relationship("TransactionItem", back_populates="transaction", cascade="all, delete-orphan")
+    items = relationship("TransactionItem", back_populates="transaction")
 
 class TransactionItem(Base):
     __tablename__ = "transaction_items"
@@ -126,16 +126,15 @@ class TransactionItem(Base):
     product = relationship("Product", back_populates="transaction_items")
 
 class Inventory(Base):
-    __tablename__ = "inventory"
+    __tablename__ = "inventories"
 
     id = Column(Integer, primary_key=True, index=True)
-    product_id = Column(Integer, ForeignKey("products.id"), nullable=False, unique=True)
-    current_stock = Column(Integer, nullable=False, default=0)
-    min_stock = Column(Integer, nullable=False, default=10)
+    product_id = Column(Integer, ForeignKey("products.id"), unique=True, nullable=False)
+    current_stock = Column(Integer, nullable=False)
+    min_stock = Column(Integer, nullable=False)
     predicted_demand = Column(Integer, default=0)
     status = Column(String, default=StockStatus.IN_STOCK.value)
     recommended_reorder = Column(Integer, default=0)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     product = relationship("Product", back_populates="inventory")
 
@@ -144,7 +143,7 @@ class DemandForecast(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     product_id = Column(Integer, ForeignKey("products.id"), nullable=False)
-    forecast_period = Column(String, nullable=False) # e.g. "Next Month"
+    month = Column(String, nullable=False)
     predicted_quantity = Column(Integer, nullable=False)
     confidence_score = Column(Float, default=0.85)
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -156,7 +155,7 @@ class Recommendation(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     product_id = Column(Integer, ForeignKey("products.id"), nullable=True)
-    type = Column(String, nullable=False) # REORDER, CROSS_SELL, CHURN_RISK, TREND
+    type = Column(String, nullable=False)
     message = Column(Text, nullable=False)
     recommended_action = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -167,13 +166,25 @@ class MarketTrend(Base):
     __tablename__ = "market_trends"
 
     id = Column(Integer, primary_key=True, index=True)
-    region = Column(String, nullable=False) # e.g. "Pune", "Mumbai"
+    region = Column(String, nullable=False)
     category_name = Column(String, nullable=False)
     demand_change_percent = Column(Float, nullable=False)
-    trend_type = Column(String, default="UPWARD") # UPWARD, DOWNWARD, STABLE
+    trend_type = Column(String, default="UPWARD")
     updated_at = Column(DateTime, default=datetime.utcnow)
 
-# Placeholders for future expanded modules
+class SupplyTransfer(Base):
+    __tablename__ = "supply_transfers"
+
+    id = Column(Integer, primary_key=True, index=True)
+    transfer_code = Column(String, unique=True, index=True, nullable=False)
+    source_region = Column(String, nullable=False)
+    target_region = Column(String, nullable=False)
+    product_name = Column(String, nullable=False)
+    quantity_units = Column(Integer, nullable=False)
+    status = Column(String, default="IN_TRANSIT")
+    wastage_prevented_kg = Column(Float, default=0.0)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
 class CustomerInteraction(Base):
     __tablename__ = "customer_interactions"
 
@@ -191,7 +202,7 @@ class Lead(Base):
     name = Column(String, nullable=False)
     phone = Column(String, nullable=True)
     email = Column(String, nullable=True)
-    status = Column(String, default="NEW") # NEW, CONTACTED, CONVERTED
+    status = Column(String, default="NEW")
     created_at = Column(DateTime, default=datetime.utcnow)
 
 class Followup(Base):

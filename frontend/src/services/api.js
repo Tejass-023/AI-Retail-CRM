@@ -21,7 +21,6 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Optional API methods wrapper
 export const authAPI = {
   login: (data) => api.post('/auth/login', data),
   register: (data) => api.post('/auth/register', data),
@@ -67,10 +66,20 @@ export const analyticsAPI = {
 export const aiAPI = {
   getForecast: (productId) => api.get(`/ai/forecast/${productId}`),
   getRecommendations: () => api.get('/ai/recommendations'),
+  getChurnRisk: (customerId) => api.get(`/ai/churn/${customerId}`),
+  chat: (message) => api.post('/ai/chat', { message }),
+  createCampaign: (data) => api.post('/ai/campaigns', data),
 };
 
 export const marketAPI = {
   getTrends: () => api.get('/market/trends'),
+};
+
+export const govtAPI = {
+  getDashboard: () => api.get('/govt/dashboard'),
+  getRegionalDemand: () => api.get('/govt/regional-demand'),
+  getSupplyTransfers: () => api.get('/govt/supply-transfers'),
+  createSupplyTransfer: (data) => api.post('/govt/supply-transfers', data),
 };
 
 export default api;
